@@ -1,20 +1,13 @@
-from mongoengine import StringField
+from mongoengine import StringField, FloatField
 
 from main.db import BaseModel
 
 
-class Product(BaseModel):
+class Item(BaseModel):
     """
-    Model for products.
+    Model for items
     """
+    item_name = StringField(required=True, unique=True)
+    price = FloatField(required=True)
+    img_url = StringField(required=True, unique=True)
 
-    family = StringField(required=True)
-    article_id = StringField(required=True, unique=True)
-
-
-class AttributeConfig(BaseModel):
-    """
-    Model for Attribute Config
-    """
-
-    family = StringField(required=True, unique=True)

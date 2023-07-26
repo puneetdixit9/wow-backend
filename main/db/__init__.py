@@ -69,13 +69,13 @@ class BaseModel(DynamicDocument):
         self.save()
 
     @classmethod
-    def get_all(cls) -> list:
+    def get_all(cls, to_json=False) -> list:
         """
         To get all records.
+        :param to_json:
         :return:
         """
-        all_records = cls.objects()
-        return [record.to_json() for record in all_records]
+        return [(record.to_json() if to_json else record) for record in cls.objects()]
 
     @classmethod
     def get_objects_with_filter(cls, only_first=None, **filters) -> list:

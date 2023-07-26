@@ -1,13 +1,13 @@
 from marshmallow import INCLUDE, Schema, fields
 
 
-class AddItemSchema(Schema):
+class AddItemsSchema(Schema):
     item_name = fields.Str(required=True)
-    prize = fields.Str(required=True)
+    price = fields.Str(required=True)
     img_url = fields.Str(required=True)
 
-    class Meta:
-        unknown = INCLUDE
+    # class Meta:
+    #     unknown = INCLUDE
 
 
 class ProductSchema(Schema):
