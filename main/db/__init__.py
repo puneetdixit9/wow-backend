@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from mongoengine import DateTimeField, DynamicDocument, connect, Q
+from mongoengine import DateTimeField, DynamicDocument, Q, connect
 
 from config import config_by_name
 
@@ -69,6 +69,15 @@ class BaseModel(DynamicDocument):
         self.save()
 
     @classmethod
+    def delete(cls, **filters):
+        """
+        To delete object with id
+        :return:
+        :rtype:
+        """
+        cls.objects(**filters).delete()
+
+    @classmethod
     def get_all(cls, to_json=False) -> list:
         """
         To get all records.
@@ -78,19 +87,19 @@ class BaseModel(DynamicDocument):
         return [(record.to_json() if to_json else record) for record in cls.objects()]
 
     @classmethod
-    def get_objects_with_filter(cls, only_first=None, **filters) -> list:
+    def get_objects_with_filter(cls, only_first=None, to_json=False, **filters) -> list:
         """
         To get objects with filter
         :param only_first:
+        :param to_json:
         :param filters:
         :return:
         """
         filtered_records = cls.objects(**filters)
         if only_first:
             record = filtered_records.first()
-            if record:
-                return record.to_json()
-        return [record.to_json() for record in filtered_records]
+            return (record.to_json() if to_json else record) if record else None
+        return [(record.to_json() if to_json else record) for record in filtered_records]
 
     @classmethod
     def get_distinct(cls, field: str) -> list:
@@ -112,7 +121,7 @@ class BaseModel(DynamicDocument):
         return cls.objects(**filters).distinct(field)
 
     @classmethod
-    def get_objects_with_filter_or(cls, only_first=None, to_json=False, **filters) -> list or 'BaseModel':
+    def get_objects_with_filter_or(cls, only_first=None, to_json=False, **filters) -> list or "BaseModel":
         """
         To get objects with filter using OR operator.
         :param only_first:
