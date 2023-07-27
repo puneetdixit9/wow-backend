@@ -54,8 +54,16 @@ class Order(Resource):
         return make_response(OrderController.get_orders())
 
 
+class OrderStatus(Resource):
+    @staticmethod
+    def put(order_id: str, status: str):
+        OrderController.update_order_status(order_id, status)
+        return make_response(jsonify(status="ok"))
+
+
 wow_namespace = Namespace("wow")
 wow_namespace.add_resource(Items, "/items")
 wow_namespace.add_resource(AddToCart, "/add-to-cart/<string:item_id>/<int:count>")
 wow_namespace.add_resource(Cart, "/cart-data")
 wow_namespace.add_resource(Order, "/order")
+wow_namespace.add_resource(OrderStatus, "/order-status/<string:order_id>/<string:status>")

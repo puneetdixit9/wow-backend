@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from mongoengine.errors import DoesNotExist
 
-from main.exceptions import CustomValidationError
+from main.exceptions import CustomValidationError, RecordNotFoundError
 from main.modules.wow.model import Cart, CartItem, Item, Order, OrderStatus
 
 
@@ -96,6 +96,16 @@ class CartController:
 
 
 class OrderController:
+    VALID_ORDER_STATUS = [
+        "placed",
+        "cancelByCustomer",
+        "inKitchen",
+        "prepared",
+        "inDelivery",
+        "allDone",
+        "cancelByStore",
+    ]
+
     @staticmethod
     def place_order():
         """
@@ -112,8 +122,8 @@ class OrderController:
             {
                 "user_id": user_id,
                 "items": cart_data.items,
-                "status_history": [OrderStatus(status="Placed")],
-                "status": "Order Placed",
+                "status_history": [OrderStatus(status="placed")],
+                "status": "placed",
             },
             to_json=True,
         )
@@ -122,6 +132,11 @@ class OrderController:
 
     @staticmethod
     def get_orders():
+        """
+        To get all orders
+        :return:
+        :rtype:
+        """
         output = []
         orders = Order.objects.order_by("-created_at")
         for order in orders:
@@ -134,3 +149,24 @@ class OrderController:
             )
 
         return output
+
+    @classmethod
+    def update_order_status(cls, order_id: str, status: str):
+        """
+        To update order status.
+        :param order_id:
+        :type order_id:
+        :param status:
+        :type status:
+        :return:
+        :rtype:
+        """
+        if status not in cls.VALID_ORDER_STATUS:
+            raise CustomValidationError(f"Invalid Order Status: {status}")
+        try:
+            order = Order.objects.get(_id=ObjectId(order_id))
+            order.status = status
+            order.status_history.append(OrderStatus(status=status))
+            order.save()
+        except DoesNotExist:
+            raise RecordNotFoundError("Invalid Order Id")
