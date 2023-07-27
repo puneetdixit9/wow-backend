@@ -87,7 +87,7 @@ class BaseModel(DynamicDocument):
         return [(record.to_json() if to_json else record) for record in cls.objects()]
 
     @classmethod
-    def get_objects_with_filter(cls, only_first=None, to_json=False, **filters) -> list:
+    def get_objects_with_filter(cls, only_first=None, to_json=False, **filters) -> list or "BaseModel":
         """
         To get objects with filter
         :param only_first:

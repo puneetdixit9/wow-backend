@@ -1,5 +1,5 @@
 from marshmallow import Schema, ValidationError, fields, validates_schema
-from marshmallow.validate import Length, OneOf
+from marshmallow.validate import Length
 
 
 class SignUpSchema(Schema):
@@ -7,11 +7,10 @@ class SignUpSchema(Schema):
     In this schema we defined the required json for signup any user.
     """
 
-    first_name = fields.String()
+    first_name = fields.String(required=True)
     last_name = fields.String()
-    username = fields.String(required=True)
     email = fields.Email(required=True)
-    role = fields.String(required=True, validate=OneOf(["user", "admin", "staff"]))  # noqa
+    phone = fields.String(required=True)
     password = fields.String(required=True, validate=Length(min=8))  # noqa
 
 
@@ -20,14 +19,19 @@ class LogInSchema(Schema):
     In this schema we defined the required json to log in any user.
     """
 
-    username = fields.String()
     email = fields.Email()
-    password = fields.String(required=True, validate=Length(min=8))  # noqa
+    password = fields.String(validate=Length(min=8))  # noqa
+    phone = fields.String()
+    otp = fields.String()
 
     @validates_schema
     def validate_at_least_one_email_and_username(self, data, **kwargs):
-        if not data.get("email") and not data.get("username"):
-            raise ValidationError("At least one param is required from ['email', 'username']")
+        if data.get("email") and not data.get("phone"):
+            if not data.get("password"):
+                raise ValidationError("Password required if you are login with email")
+            return
+        if data.get("phone") and not data.get("otp"):
+            raise ValidationError("OTP required if you are login with phone")
 
 
 class UpdatePassword(Schema):
@@ -37,3 +41,11 @@ class UpdatePassword(Schema):
 
     old_password = fields.String(required=True)
     new_password = fields.String(required=True, validate=Length(min=8))  # noqa
+
+
+class SendOTP(Schema):
+    """
+    Required Schema for Send OTP
+    """
+
+    phone = fields.String(required=True)
