@@ -1,7 +1,6 @@
 import os
-import time
 
-from flask import Flask, render_template, Response
+from flask import Flask
 from flask_cors import CORS
 
 from config import config_by_name
@@ -11,7 +10,6 @@ from main.exceptions.handlers import handle_exception
 from main.logger import ERROR, get_handler
 from main.modules import api, jwt
 from main.utils import log_user_access
-# from flask_sse import sse
 
 
 def get_app(env=None, config=None):
@@ -34,5 +32,4 @@ def get_app(env=None, config=None):
     app.logger.addHandler(get_handler("exceptions", ERROR))
     app.after_request(log_user_access)
     app.register_error_handler(Exception, lambda e: handle_exception(e, app))
-
     return app

@@ -74,23 +74,23 @@ class AuthUserController:
         email = login_data.get("email")
         phone = login_data.get("phone")
         if email:
-            auth_user = AuthUser.objects(email=email).first().to_json()
+            auth_user = AuthUser.objects(email=email).first()
             if not auth_user:
                 raise RecordNotFoundError(f"User not found with email: '{email}'")
 
-            if check_password_hash(auth_user["password"], login_data["password"]):
-                return JWTController.get_access_and_refresh_token(auth_user)
-            raise RecordNotFoundError("Wrong password")
+            if check_password_hash(auth_user.password, login_data["password"]):
+                return JWTController.get_access_and_refresh_token(auth_user.to_json())
+            raise RecordNotFoundError("Wrong password !")
 
         auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True, to_json=True)
         if not auth_user:
             raise RecordNotFoundError(f"User not found with phone: '{phone}'")
         otp = auth_user.get("otp")
         if not otp:
-            raise CustomValidationError("Last OTP expired, Please resend OTP")
+            raise CustomValidationError("OTP expired, Please resend OTP")
         if str(otp) == str(login_data["otp"]):
             return JWTController.get_access_and_refresh_token(auth_user)
-        raise CustomValidationError("Invalid OTP")
+        raise CustomValidationError("Invalid OTP !")
 
     @staticmethod
     def logout():

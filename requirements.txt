@@ -18,3 +18,4 @@ PyYAML~=6.0
 alembic~=1.10.3
 Flask-Caching==2.0.2
 redis==4.5.5
+flask-socketio==5.3.5

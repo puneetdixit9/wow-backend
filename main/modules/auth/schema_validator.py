@@ -20,7 +20,7 @@ class LogInSchema(Schema):
     """
 
     email = fields.Email()
-    password = fields.String(validate=Length(min=8))  # noqa
+    password = fields.String()
     phone = fields.String()
     otp = fields.String()
 
