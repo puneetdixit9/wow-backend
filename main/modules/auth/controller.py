@@ -1,4 +1,5 @@
 import enum
+from datetime import datetime
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -64,8 +65,8 @@ class AuthUserController:
             return {"status": "success"}, ""
         return {}, "Old password is invalid"
 
-    @staticmethod
-    def get_token(login_data: dict) -> [dict, str]:
+    @classmethod
+    def get_token(cls, login_data: dict) -> [dict, str]:
         """
         To get jwt bearer token on login
         :param login_data:
@@ -78,19 +79,37 @@ class AuthUserController:
             if not auth_user:
                 raise RecordNotFoundError(f"User not found with email: '{email}'")
 
+            if not auth_user.account_verified:
+                raise CustomValidationError(
+                    "Your Account is not verified yet, Login with Phone Number to verify " "your account."
+                )
+
             if check_password_hash(auth_user.password, login_data["password"]):
+                cls.update_auth_user(auth_user)
                 return JWTController.get_access_and_refresh_token(auth_user.to_json())
             raise RecordNotFoundError("Wrong password !")
 
-        auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True, to_json=True)
+        auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True)
         if not auth_user:
             raise RecordNotFoundError(f"User not found with phone: '{phone}'")
-        otp = auth_user.get("otp")
+        otp = auth_user.otp
         if not otp:
             raise CustomValidationError("OTP expired, Please resend OTP")
         if str(otp) == str(login_data["otp"]):
-            return JWTController.get_access_and_refresh_token(auth_user)
+            cls.update_auth_user(auth_user)
+            return JWTController.get_access_and_refresh_token(auth_user.to_json())
         raise CustomValidationError("Invalid OTP !")
+
+    @staticmethod
+    def update_auth_user(auth_user: AuthUser):
+        auth_user.update(
+            {
+                "account_verified": True,
+                "last_login_time": auth_user.current_login_time,
+                "otp": "0",
+                "current_login_time": datetime.now(),
+            }
+        )
 
     @staticmethod
     def logout():
@@ -123,3 +142,16 @@ class AuthUserController:
         if not auth_user:
             raise RecordNotFoundError("Phone number not found")
         auth_user.update({"otp": "111000"})
+
+    @classmethod
+    def get_user_info(cls) -> dict:
+        """
+        To get user info
+        :return:
+        :rtype:
+        """
+        auth_user = cls.get_current_auth_user().to_json()
+        del auth_user["password"]
+        del auth_user["otp"]
+        del auth_user["account_verified"]
+        return auth_user

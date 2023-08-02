@@ -107,9 +107,10 @@ class OrderController:
     ]
 
     @staticmethod
-    def place_order():
+    def place_order(order_note: str):
         """
         To place order
+        :param order_note:
         :return:
         :rtype:
         """
@@ -124,6 +125,7 @@ class OrderController:
                 "items": cart_data.items,
                 "status_history": [OrderStatus(status="placed")],
                 "status": "placed",
+                "order_note": order_note,
             },
             to_json=True,
         )
@@ -145,7 +147,13 @@ class OrderController:
                 item_name = Item.objects.get(_id=item.item_id).item_name
                 items.append({"count": item.count, "item_name": item_name})
             output.append(
-                {"items": items, "placed_at": order.created_at, "status": order.status, "order_id": str(order.id)}
+                {
+                    "items": items,
+                    "placed_at": order.created_at,
+                    "status": order.status,
+                    "order_id": str(order.id),
+                    "order_note": order.order_note,
+                }
             )
 
         return output

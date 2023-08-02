@@ -63,6 +63,7 @@ class JWTController:
             "refresh_token": create_refresh_token(identity=identity),
             "expires": config_by_name[os.getenv("FLASK_ENV") or "dev"]["JWT_ACCESS_TOKEN_EXPIRES"].total_seconds(),
             "token_type": "bearer",
+            "role": auth_user["role"],
         }
 
     @classmethod

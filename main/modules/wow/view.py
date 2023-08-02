@@ -2,7 +2,7 @@ from flask import jsonify, make_response, request
 from flask_restx import Namespace, Resource
 
 from main.modules.wow.controller import CartController, ItemController, OrderController
-from main.modules.wow.schema_validator import AddItemsSchema
+from main.modules.wow.schema_validator import AddItemsSchema, PlaceOrderSchema
 from main.utils import get_data_from_request_or_raise_validation_error
 
 
@@ -47,7 +47,8 @@ class Cart(Resource):
 class Order(Resource):
     @staticmethod
     def post():
-        return make_response(jsonify(OrderController.place_order()), 201)
+        data = get_data_from_request_or_raise_validation_error(PlaceOrderSchema, request.json)
+        return make_response(jsonify(OrderController.place_order(data.get("order_note") or "")), 201)
 
     @staticmethod
     def get():

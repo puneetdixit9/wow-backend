@@ -67,3 +67,4 @@ class Order(BaseModel):
     items = ListField(EmbeddedDocumentField(CartItem), required=True)
     status_history = ListField(EmbeddedDocumentField(OrderStatus))
     status = StringField(required=True)
+    order_note = StringField()

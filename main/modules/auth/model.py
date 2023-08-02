@@ -1,4 +1,4 @@
-from mongoengine import EmailField, StringField
+from mongoengine import BooleanField, DateTimeField, EmailField, StringField
 
 from main.db import BaseModel
 
@@ -15,3 +15,6 @@ class AuthUser(BaseModel):
     password = StringField(required=True)
     role = StringField(required=True, default="customer")
     otp = StringField()
+    account_verified = BooleanField(required=True, default=False)
+    current_login_time = DateTimeField()
+    last_login_time = DateTimeField()

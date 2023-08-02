@@ -10,6 +10,10 @@ class AddItemsSchema(Schema):
     #     unknown = INCLUDE
 
 
+class PlaceOrderSchema(Schema):
+    order_note = fields.Str()
+
+
 class ProductSchema(Schema):
     family = fields.Str(required=True)
     article_id = fields.Str(required=True)

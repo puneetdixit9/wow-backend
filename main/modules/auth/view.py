@@ -65,6 +65,14 @@ class OTP(Resource):
         return make_response(jsonify(status="ok"))
 
 
+class UserInfo(Resource):
+    method_decorators = [jwt_required()]
+
+    @staticmethod
+    def get():
+        return make_response(AuthUserController.get_user_info())
+
+
 auth_namespace = Namespace("wow/auth", description="Auth Operations")
 auth_namespace.add_resource(SignUp, "/signup")
 auth_namespace.add_resource(Login, "/login")
@@ -72,3 +80,4 @@ auth_namespace.add_resource(Refresh, "/refresh")
 auth_namespace.add_resource(ChangePassword, "/change_password")
 auth_namespace.add_resource(Logout, "/logout")
 auth_namespace.add_resource(OTP, "/otp")
+auth_namespace.add_resource(UserInfo, "/user-info")
