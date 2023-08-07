@@ -1,4 +1,5 @@
 from marshmallow import INCLUDE, Schema, fields
+from marshmallow.validate import OneOf
 
 
 class AddItemsSchema(Schema):
@@ -11,7 +12,8 @@ class AddItemsSchema(Schema):
 
 
 class PlaceOrderSchema(Schema):
-    order_note = fields.Str()
+    order_note = fields.Str(required=True, default="")
+    order_type = fields.Str(required=True, validate=OneOf(["Dine-in", "Delivery"]))  # noqa
 
 
 class ProductSchema(Schema):

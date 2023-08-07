@@ -48,7 +48,7 @@ class Order(Resource):
     @staticmethod
     def post():
         data = get_data_from_request_or_raise_validation_error(PlaceOrderSchema, request.json)
-        return make_response(jsonify(OrderController.place_order(data.get("order_note") or "")), 201)
+        return make_response(jsonify(OrderController.place_order(data)), 201)
 
     @staticmethod
     def get():

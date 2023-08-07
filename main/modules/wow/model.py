@@ -68,3 +68,4 @@ class Order(BaseModel):
     status_history = ListField(EmbeddedDocumentField(OrderStatus))
     status = StringField(required=True)
     order_note = StringField()
+    order_type = StringField()

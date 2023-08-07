@@ -107,10 +107,10 @@ class OrderController:
     ]
 
     @staticmethod
-    def place_order(order_note: str):
+    def place_order(data: dict):
         """
         To place order
-        :param order_note:
+        :param data:
         :return:
         :rtype:
         """
@@ -125,7 +125,8 @@ class OrderController:
                 "items": cart_data.items,
                 "status_history": [OrderStatus(status="placed")],
                 "status": "placed",
-                "order_note": order_note,
+                "order_note": data["order_note"],
+                "order_type": data["order_type"],
             },
             to_json=True,
         )
@@ -153,6 +154,7 @@ class OrderController:
                     "status": order.status,
                     "order_id": str(order.id),
                     "order_note": order.order_note,
+                    "order_type": order.order_type,
                 }
             )
 
