@@ -14,6 +14,15 @@ from mongoengine import (
 from main.db import BaseModel
 
 
+class ItemAvailableSizes(EmbeddedDocument):
+    """
+    Embedded document for order status
+    """
+
+    size = StringField(required=True)
+    price = FloatField(required=True)
+
+
 class Item(BaseModel):
     """
     Model for items
@@ -22,6 +31,7 @@ class Item(BaseModel):
     item_name = StringField(required=True, unique=True)
     price = FloatField(required=True)
     img_url = StringField(required=True, unique=True)
+    available_sizes = ListField(EmbeddedDocumentField(ItemAvailableSizes))
 
     meta = {
         "indexes": [
@@ -68,4 +78,7 @@ class Order(BaseModel):
     status_history = ListField(EmbeddedDocumentField(OrderStatus))
     status = StringField(required=True)
     order_note = StringField()
-    order_type = StringField()
+    order_type = StringField(required=True)
+    order_no = IntField(required=True)
+    delivery_address = StringField()
+    mobile_number = StringField()

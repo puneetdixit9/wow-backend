@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from bson.objectid import ObjectId
+from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 
 from main.exceptions import CustomValidationError, RecordNotFoundError
@@ -118,20 +121,25 @@ class OrderController:
         cart_data = Cart.objects(_id=user_id).first()
         if not cart_data or not cart_data.items:
             raise CustomValidationError("Items not present in the cart, Please add items in the cart and try again.")
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        order_count = Order.objects(Q(created_at__gte=current_date)).count()
 
-        order = Order.create(
+        Order.create(
             {
                 "user_id": user_id,
                 "items": cart_data.items,
                 "status_history": [OrderStatus(status="placed")],
                 "status": "placed",
+                "order_no": order_count + 1,
                 "order_note": data["order_note"],
                 "order_type": data["order_type"],
+                "delivery_address": data.get("delivery_address", ""),
+                "mobile_number": data.get("mobile_number", ""),
             },
             to_json=True,
         )
         CartController.discard_cart_items()
-        return {"status": "ok", "order_id": order["_id"]}
+        return {"status": "ok", "order_no": order_count + 1}
 
     @staticmethod
     def get_orders():
@@ -158,6 +166,43 @@ class OrderController:
                 }
             )
 
+        return output
+
+    @staticmethod
+    def get_orders_with_filters(filters: dict = dict):
+        """
+        To get orders with filters
+        :param filters:
+        :type filters:
+        :return:
+        :rtype:
+        """
+        key = ""
+        if "order_by" in filters:
+            sorting = "-" if filters["order_by"]["sorting"] == "desc" else ""
+            key = sorting + filters["order_by"]["key"]
+        output = []
+        orders = Order.get_objects_with_or_filter_multiple_values(
+            or_filters=filters["or_filters"], today_records=filters["today_records"], order_by=key, **filters["filters"]
+        )
+        for order in orders:
+            items = []
+            for item in order.items:
+                item_name = Item.objects.get(_id=item.item_id).item_name
+                items.append({"count": item.count, "item_name": item_name})
+            output.append(
+                {
+                    "items": items,
+                    "placed_at": order.created_at,
+                    "status": order.status,
+                    "order_id": str(order.id),
+                    "order_note": order.order_note,
+                    "order_type": order.order_type,
+                    "order_no": order.order_no,
+                    "delivery_address": order.delivery_address,
+                    "mobile_number": order.mobile_number,
+                }
+            )
         return output
 
     @classmethod

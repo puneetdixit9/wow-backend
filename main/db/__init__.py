@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from bson.objectid import ObjectId
 from mongoengine import DateTimeField, DynamicDocument, Q, connect
@@ -144,3 +144,82 @@ class BaseModel(DynamicDocument):
             record = filtered_records.first()
             return (record.to_json() if to_json and record else record) if record else None
         return [(record.to_json() if to_json else record) for record in filtered_records]
+
+    @classmethod
+    def get_objects_with_or_filter_multiple_values(
+        cls,
+        or_filters: dict,
+        only_first=None,
+        to_json=False,
+        today_records: bool = False,
+        order_by: str = None,
+        **filters,
+    ) -> list or "BaseModel":
+        """
+        To get the filtered objects on same key with multiple values.
+        :param order_by:
+        :type order_by:
+        :param today_records:
+        :type today_records:
+        :param only_first:
+        :type only_first:
+        :param to_json:
+        :type to_json:
+        :param or_filters:  {key: [val, val2], key2: [val, val2]}
+        :type or_filters:
+        :return:
+        :rtype:
+        """
+        if or_filters:
+            or_filters = [Q(**{field: or_value}) for field, values in or_filters.items() for or_value in values]
+
+        combined_filter = None
+
+        if or_filters:
+            combined_filter = or_filters.pop()
+            for q in or_filters:
+                combined_filter |= q
+
+        if filters:
+            additional_filter = Q(**filters)
+            if combined_filter:
+                combined_filter &= additional_filter
+            else:
+                combined_filter = additional_filter
+
+        if today_records:
+            date_filter = cls.get_time_range_filters(today=True)
+            if combined_filter:
+                combined_filter &= date_filter
+            else:
+                combined_filter = date_filter
+
+        if combined_filter:
+            filtered_records = cls.objects.filter(combined_filter)
+        else:
+            filtered_records = cls.objects()
+
+        if order_by:
+            filtered_records = filtered_records.order_by(order_by)
+        if only_first:
+            record = filtered_records.first()
+            return (record.to_json() if to_json and record else record) if record else None
+        return [(record.to_json() if to_json else record) for record in filtered_records]
+
+    @staticmethod
+    def get_time_range_filters(start_datetime: str = "", end_datetime: str = "", today: bool = False):
+        """
+        To create filters for a time range.
+        :param start_datetime:
+        :type start_datetime:
+        :param end_datetime:
+        :type end_datetime:
+        :param today:
+        :type today:
+        :return:
+        :rtype:
+        """
+        if today:
+            start_of_day = datetime.combine(datetime.now().date(), time())
+            end_of_day = start_of_day + timedelta(days=1)
+            return Q(created_at__gte=start_of_day, created_at__lt=end_of_day)
