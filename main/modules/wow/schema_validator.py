@@ -11,6 +11,7 @@ class AddItemsSchema(Schema):
     item_name = fields.Str(required=True)
     price = fields.Str(required=True)
     img_url = fields.Str(required=True)
+    item_group = fields.Str(required=True)
     available_sizes = fields.List(fields.Nested(AvailableSizesSchema))  # noqa
 
 

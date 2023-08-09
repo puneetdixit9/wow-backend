@@ -32,8 +32,8 @@ class Items(Resource):
 
 class AddToCart(Resource):
     @staticmethod
-    def post(item_id: str, count: int):
-        CartController.add_or_update_item(item_id, count)
+    def post(item_id: str, count: int, size: str):
+        CartController.add_or_update_item(item_id, count, size)
         return make_response(jsonify(status="ok"), 201)
 
 
@@ -75,7 +75,7 @@ class OrderStatus(Resource):
 
 wow_namespace = Namespace("wow")
 wow_namespace.add_resource(Items, "/items")
-wow_namespace.add_resource(AddToCart, "/add-to-cart/<string:item_id>/<int:count>")
+wow_namespace.add_resource(AddToCart, "/add-to-cart/<string:item_id>/<int:count>/<string:size>")
 wow_namespace.add_resource(Cart, "/cart-data")
 wow_namespace.add_resource(Order, "/order")
 wow_namespace.add_resource(Orders, "/orders")

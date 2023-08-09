@@ -32,6 +32,7 @@ class Item(BaseModel):
     price = FloatField(required=True)
     img_url = StringField(required=True, unique=True)
     available_sizes = ListField(EmbeddedDocumentField(ItemAvailableSizes))
+    item_group = StringField(required=True)
 
     meta = {
         "indexes": [
@@ -48,6 +49,7 @@ class CartItem(EmbeddedDocument):
 
     item_id = ObjectIdField(required=True)
     count = IntField(default=1)
+    size = StringField(default="regular")
 
 
 class Cart(BaseModel):

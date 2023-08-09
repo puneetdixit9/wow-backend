@@ -38,9 +38,10 @@ class ItemController:
 
 class CartController:
     @staticmethod
-    def add_or_update_item(item_id: str, count: int):
+    def add_or_update_item(item_id: str, count: int, size: str):
         """
         To add or update items in cart
+        :param size:
         :param item_id:
         :param count:
         :return:
@@ -59,7 +60,7 @@ class CartController:
                         break
 
                 if not item_found:
-                    cart.items.append(CartItem(item_id=ObjectId(item_id), count=count))
+                    cart.items.append(CartItem(item_id=ObjectId(item_id), count=count, size=size))
             else:
                 cart.items = [item for item in cart.items if item.item_id != ObjectId(item_id)]
 
@@ -67,7 +68,7 @@ class CartController:
             return True
         except DoesNotExist:
             if count:
-                Cart.create({"_id": user_id, "items": [CartItem(item_id=ObjectId(item_id), count=count)]})
+                Cart.create({"_id": user_id, "items": [CartItem(item_id=ObjectId(item_id), count=count, size=size)]})
                 return True
 
         return False
@@ -79,10 +80,22 @@ class CartController:
         :return:
         :rtype:
         """
+
+        def convert_item_data(item, size):
+            return {
+                "img_url": item.img_url,
+                "item_name": item.item_name,
+                "price": next((i.price for i in item.available_sizes if i.size == size), item.price),
+                "size": size,
+            }
+
         user_id = ObjectId("64c0b10adea2b1de6abd6264")
         cart_data = Cart.objects(_id=user_id).first()
         return (
-            [Item.objects.get(_id=item.item_id).to_json() | {"count": item.count} for item in cart_data.items]
+            [
+                convert_item_data(Item.objects.get(_id=item.item_id), item.size) | {"count": item.count}
+                for item in cart_data.items
+            ]
             if cart_data
             else []
         )
@@ -189,7 +202,7 @@ class OrderController:
             items = []
             for item in order.items:
                 item_name = Item.objects.get(_id=item.item_id).item_name
-                items.append({"count": item.count, "item_name": item_name})
+                items.append({"count": item.count, "item_name": item_name, "size": item.size})
             output.append(
                 {
                     "items": items,
