@@ -73,7 +73,7 @@ class UserInfo(Resource):
         return make_response(AuthUserController.get_user_info())
 
 
-auth_namespace = Namespace("wow/auth", description="Auth Operations")
+auth_namespace = Namespace("wow-api/auth", description="Auth Operations")
 auth_namespace.add_resource(SignUp, "/signup")
 auth_namespace.add_resource(Login, "/login")
 auth_namespace.add_resource(Refresh, "/refresh")

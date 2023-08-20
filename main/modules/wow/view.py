@@ -84,7 +84,7 @@ class OrderStatus(Resource):
         return make_response(jsonify(status="ok"))
 
 
-wow_namespace = Namespace("wow")
+wow_namespace = Namespace("wow-api")
 wow_namespace.add_resource(Items, "/items")
 wow_namespace.add_resource(AddToCart, "/add-to-cart/<string:item_id>/<int:count>/<string:size>")
 wow_namespace.add_resource(Cart, "/cart-data")
