@@ -98,7 +98,7 @@ class BaseModel(DynamicDocument):
         filtered_records = cls.objects(**filters)
         if only_first:
             record = filtered_records.first()
-            return (record.to_json() if to_json else record) if record else None
+            return record.to_json() if to_json else record if record else None
         return [(record.to_json() if to_json else record) for record in filtered_records]
 
     @classmethod

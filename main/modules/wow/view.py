@@ -1,4 +1,5 @@
 from flask import jsonify, make_response, request
+from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource
 
 from main.modules.wow.controller import CartController, ItemController, OrderController
@@ -11,6 +12,8 @@ from main.utils import get_data_from_request_or_raise_validation_error
 
 
 class Items(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def post():
         data = get_data_from_request_or_raise_validation_error(AddItemsSchema, request.json, many=True)
@@ -31,6 +34,8 @@ class Items(Resource):
 
 
 class AddToCart(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def post(item_id: str, count: int, size: str):
         CartController.add_or_update_item(item_id, count, size)
@@ -38,6 +43,8 @@ class AddToCart(Resource):
 
 
 class Cart(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def get():
         return make_response(CartController.get_cart_data())
@@ -49,6 +56,8 @@ class Cart(Resource):
 
 
 class Order(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def post():
         data = get_data_from_request_or_raise_validation_error(PlaceOrderSchema, request.json)
@@ -60,6 +69,8 @@ class Order(Resource):
 
 
 class Orders(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def post():
         filters = get_data_from_request_or_raise_validation_error(OrderSearchSchema, request.json)

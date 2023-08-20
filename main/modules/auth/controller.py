@@ -155,3 +155,7 @@ class AuthUserController:
         del auth_user["otp"]
         del auth_user["account_verified"]
         return auth_user
+
+    @classmethod
+    def get_user_by_id(cls, user_id):
+        return AuthUser.objects.get(_id=user_id)

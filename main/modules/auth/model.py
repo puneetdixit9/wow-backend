@@ -18,3 +18,12 @@ class AuthUser(BaseModel):
     account_verified = BooleanField(required=True, default=False)
     current_login_time = DateTimeField()
     last_login_time = DateTimeField()
+
+
+class MobileAccounts(BaseModel):
+    """
+    Accounts using mobile
+    """
+
+    role = StringField(required=True, default="customer")
+    phone = StringField(required=True, unique=True)

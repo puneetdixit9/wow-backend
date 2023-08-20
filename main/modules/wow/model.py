@@ -82,5 +82,6 @@ class Order(BaseModel):
     order_note = StringField()
     order_type = StringField(required=True)
     order_no = IntField(required=True)
+    delivery_man_id = ObjectIdField()
     delivery_address = StringField()
     mobile_number = StringField()
