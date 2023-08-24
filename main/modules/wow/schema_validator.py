@@ -1,4 +1,4 @@
-from marshmallow import INCLUDE, Schema, fields, validate
+from marshmallow import Schema, fields, validate
 from marshmallow.validate import OneOf
 
 
@@ -20,25 +20,7 @@ class PlaceOrderSchema(Schema):
     order_type = fields.Str(required=True, validate=validate.OneOf(["Dine-in", "Delivery"]))  # noqa
     delivery_address = fields.Str()
     mobile_number = fields.Str()
-
-
-class ProductSchema(Schema):
-    family = fields.Str(required=True)
-    article_id = fields.Str(required=True)
-
-    class Meta:
-        unknown = INCLUDE
-
-
-class AttributeConfigValidator(Schema):
-    name = fields.Str(required=True)
-    type = fields.Str(required=True)
-    required = fields.Boolean(required=True)
-    label = fields.Str(required=True)
-    editable = fields.Boolean(required=False, default=False)
-
-    class Meta:
-        unknown = INCLUDE
+    total = fields.Float(required=True)
 
 
 class OrderBy(Schema):

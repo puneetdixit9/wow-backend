@@ -78,6 +78,8 @@ class Orders(Resource):
 
 
 class OrderStatus(Resource):
+    method_decorators = [jwt_required()]
+
     @staticmethod
     def put(order_id: str, status: str):
         OrderController.update_order_status(order_id, status)

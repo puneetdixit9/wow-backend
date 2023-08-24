@@ -17,6 +17,7 @@ class AuthUserController:
         ADMIN = "admin"
         STAFF = "staff"
         CUSTOMER = "customer"
+        DELIVERY_MAN = "deliveryMan"
 
     @staticmethod
     def get_current_auth_user() -> AuthUser:

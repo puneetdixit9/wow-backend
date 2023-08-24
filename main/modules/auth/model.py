@@ -19,6 +19,18 @@ class AuthUser(BaseModel):
     current_login_time = DateTimeField()
     last_login_time = DateTimeField()
 
+    def is_Admin(self):
+        return self.role == "admin"
+
+    def is_customer(self):
+        return self.role == "customer"
+
+    def is_delivery_man(self):
+        return self.role == "deliveryMan"
+
+    def is_staff(self):
+        return self.role == "staff"
+
 
 class MobileAccounts(BaseModel):
     """

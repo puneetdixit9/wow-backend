@@ -85,3 +85,4 @@ class Order(BaseModel):
     delivery_man_id = ObjectIdField()
     delivery_address = StringField()
     mobile_number = StringField()
+    total = FloatField(required=True)

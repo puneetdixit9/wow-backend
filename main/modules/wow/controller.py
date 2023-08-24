@@ -9,6 +9,7 @@ from main.exceptions import CustomValidationError, RecordNotFoundError
 from main.modules.auth.controller import AuthUserController
 from main.modules.auth.model import AuthUser, MobileAccounts
 from main.modules.wow.model import Cart, CartItem, Item, Order, OrderStatus
+from main.msg_broker.RabbitMQ import StompConnection
 
 
 class ItemController:
@@ -143,7 +144,7 @@ class OrderController:
         order_count = Order.objects(Q(created_at__gte=current_date)).count()
         user_id = cls.get_order_user_id(data)
 
-        Order.create(
+        order_id = Order.create(
             {
                 "user_id": user_id,
                 "items": cart_data.items,
@@ -153,10 +154,11 @@ class OrderController:
                 "order_note": data["order_note"],
                 "order_type": data["order_type"],
                 "delivery_address": data.get("delivery_address", ""),
-                "mobile_number": data.get("mobile_number", ""),
+                "mobile_number": user.phone if user.is_customer() else data["mobile_number"],
+                "total": data["total"],
             },
-            to_json=True,
-        )
+        ).id
+        StompConnection().send_message(f"order placed : {order_id}", "/queue/test")
         CartController.discard_cart_items()
         return {"status": "ok", "order_no": order_count + 1}
 
@@ -185,33 +187,6 @@ class OrderController:
                     new_mobile_account = MobileAccounts.create({"phone": phone})
                     user_id = new_mobile_account.id
         return user_id
-
-    @staticmethod
-    def get_orders():
-        """
-        To get all orders
-        :return:
-        :rtype:
-        """
-        output = []
-        orders = Order.objects.order_by("-created_at")
-        for order in orders:
-            items = []
-            for item in order.items:
-                item_name = Item.objects.get(_id=item.item_id).item_name
-                items.append({"count": item.count, "item_name": item_name})
-            output.append(
-                {
-                    "items": items,
-                    "placed_at": order.created_at,
-                    "status": order.status,
-                    "order_id": str(order.id),
-                    "order_note": order.order_note,
-                    "order_type": order.order_type,
-                }
-            )
-
-        return output
 
     @staticmethod
     def get_orders_with_filters(filters: dict = dict):
@@ -283,6 +258,9 @@ class OrderController:
             raise CustomValidationError(f"Invalid Order Status: {status}")
         try:
             order = Order.objects.get(_id=ObjectId(order_id))
+            if status == "inDelivery":
+                user = AuthUserController.get_current_auth_user()
+                order.delivery_man_id = user.id
             order.status = status
             order.status_history.append(OrderStatus(status=status))
             order.save()
