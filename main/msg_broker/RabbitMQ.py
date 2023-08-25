@@ -60,12 +60,14 @@ class PikaConnection:
         self.username = "admin"
         self.password = "1m2p3k4n"
         self.conn = None
+        self.channel = None
         self.connect()
 
     def connect(self):
         credentials = pika.PlainCredentials(self.username, self.password)
         parameters = pika.ConnectionParameters(self.host, self.port, "/", credentials)
         self.conn = pika.BlockingConnection(parameters)
+        self.channel = self.conn.channel()
         print("Pika connection established")
 
     def broadcast_to_exchange(self, exchange_name: str, body: str):
@@ -78,9 +80,8 @@ class PikaConnection:
         :return:
         :rtype:
         """
-        channel = self.conn.channel()
-        channel.exchange_declare(exchange=exchange_name, exchange_type="fanout")
-        channel.basic_publish(exchange=exchange_name, routing_key="", body=body)
+        self.channel.exchange_declare(exchange=exchange_name, exchange_type="fanout")
+        self.channel.basic_publish(exchange=exchange_name, routing_key="", body=body)
         print(f"Message broadcast done to exchange: {exchange_name}")
 
     def send_to_queue(self, queue_name: str, body: str):
@@ -93,14 +94,14 @@ class PikaConnection:
         :return:
         :rtype:
         """
-        channel = self.conn.channel()
+        # channel = self.conn.channel()
         try:
-            channel.queue_declare(queue=queue_name, durable=True)
+            self.channel.queue_declare(queue=queue_name, durable=True)
         except pika.exceptions.ChannelClosedByBroker as e:  # noqa
             print(f"Queue {queue_name} already exists. ==>> ", e)
-            channel = self.conn.channel()
+            self.channel = self.conn.channel()
 
-        channel.basic_publish(exchange="", routing_key=queue_name, body=body)
+        self.channel.basic_publish(exchange="", routing_key=queue_name, body=body)
         print(f"Message sent to queue: {queue_name}")
 
     def disconnect(self):
