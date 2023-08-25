@@ -9,7 +9,7 @@ from main.exceptions import CustomValidationError, RecordNotFoundError
 from main.modules.auth.controller import AuthUserController
 from main.modules.auth.model import AuthUser, MobileAccounts
 from main.modules.wow.model import Cart, CartItem, Item, Order, OrderStatus
-from main.msg_broker.RabbitMQ import StompConnection
+from main.msg_broker.RabbitMQ import PikaConnection, StompConnection
 
 
 class ItemController:
@@ -128,6 +128,9 @@ class OrderController:
         "cancelByStore",
     ]
 
+    pika_conn = PikaConnection()
+    stomp_conn = StompConnection()
+
     @classmethod
     def place_order(cls, data: dict):
         """
@@ -158,7 +161,8 @@ class OrderController:
                 "total": data["total"],
             },
         ).id
-        StompConnection().send_message(f"order placed : {order_id}", "/queue/test")
+        # cls.stomp_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
+        cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
         CartController.discard_cart_items()
         return {"status": "ok", "order_no": order_count + 1}
 
