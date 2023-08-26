@@ -80,9 +80,17 @@ class PikaConnection:
         :return:
         :rtype:
         """
-        self.channel.exchange_declare(exchange=exchange_name, exchange_type="fanout")
-        self.channel.basic_publish(exchange=exchange_name, routing_key="", body=body)
-        print(f"Message broadcast done to exchange: {exchange_name}")
+        try:
+            self.channel.exchange_declare(exchange=exchange_name, exchange_type="fanout")
+            self.channel.basic_publish(exchange=exchange_name, routing_key="", body=body)
+            print(f"Message broadcast done to exchange: {exchange_name}")
+        except Exception as e:  # noqa
+            print("Exception in publishing -> ", e)
+            print("Retrying...")
+            self.connect()
+            self.channel.exchange_declare(exchange=exchange_name, exchange_type="fanout")
+            self.channel.basic_publish(exchange=exchange_name, routing_key="", body=body)
+            print(f"Message broadcast done to exchange: {exchange_name}")
 
     def send_to_queue(self, queue_name: str, body: str):
         """
