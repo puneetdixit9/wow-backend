@@ -49,3 +49,15 @@ class SendOTP(Schema):
     """
 
     phone = fields.String(required=True)
+
+
+class UpdateUserProfileSchema(Schema):
+    """
+    Required Schema for user profile update
+    """
+
+    first_name = fields.String()
+    last_name = fields.String()
+    phone = fields.String()
+    is_active = fields.Boolean()
+    role = fields.String()

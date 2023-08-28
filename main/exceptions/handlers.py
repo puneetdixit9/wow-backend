@@ -40,3 +40,11 @@ def handle_unauthorized_user_error(error):
 
 def handle_record_not_found_error(error):
     return create_error_response(error)
+
+
+def handle_path_not_found_error(error):
+    return create_error_response(error)
+
+
+def handle_duplicate_entry_error(error):
+    return create_error_response(error)

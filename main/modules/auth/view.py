@@ -8,6 +8,7 @@ from main.modules.auth.schema_validator import (
     SendOTP,
     SignUpSchema,
     UpdatePassword,
+    UpdateUserProfileSchema,
 )
 from main.utils import get_data_from_request_or_raise_validation_error
 
@@ -65,12 +66,26 @@ class OTP(Resource):
         return make_response(jsonify(status="ok"))
 
 
-class UserInfo(Resource):
+class User(Resource):
+    method_decorators = [jwt_required()]
+
+    @staticmethod
+    def get(email: str = None):
+        return make_response(AuthUserController.get_user(email))
+
+    @staticmethod
+    def put(email: str = None):
+        data = get_data_from_request_or_raise_validation_error(UpdateUserProfileSchema, request.json)
+        AuthUserController.update_user(data, email)
+        return make_response(jsonify(status="ok"))
+
+
+class Users(Resource):
     method_decorators = [jwt_required()]
 
     @staticmethod
     def get():
-        return make_response(AuthUserController.get_user_info())
+        return make_response(AuthUserController.get_users(**request.args, to_json=True))
 
 
 auth_namespace = Namespace("wow-api/auth", description="Auth Operations")
@@ -80,4 +95,5 @@ auth_namespace.add_resource(Refresh, "/refresh")
 auth_namespace.add_resource(ChangePassword, "/change_password")
 auth_namespace.add_resource(Logout, "/logout")
 auth_namespace.add_resource(OTP, "/otp")
-auth_namespace.add_resource(UserInfo, "/user-info")
+auth_namespace.add_resource(User, "/user", "/user/<string:email>")
+auth_namespace.add_resource(Users, "/users")

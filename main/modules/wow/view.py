@@ -2,9 +2,16 @@ from flask import jsonify, make_response, request
 from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource
 
-from main.modules.wow.controller import CartController, ItemController, OrderController
+from main.exceptions.errors import PathNotFoundError
+from main.modules.wow.controller import (
+    CartController,
+    ConfigController,
+    ItemController,
+    OrderController,
+)
 from main.modules.wow.schema_validator import (
     AddItemsSchema,
+    CafeConfigSchema,
     OrderSearchSchema,
     PlaceOrderSchema,
 )
@@ -86,6 +93,37 @@ class OrderStatus(Resource):
         return make_response(jsonify(status="ok"))
 
 
+class ConfigResource(Resource):
+    @staticmethod
+    def post(restaurant: str = None):
+        if restaurant:
+            raise PathNotFoundError(request.method)
+        data = get_data_from_request_or_raise_validation_error(CafeConfigSchema, request.json)
+        ConfigController.add_config(data)
+        return make_response(jsonify(status="ok"))
+
+    @staticmethod
+    def get(restaurant: str = None):
+        if not restaurant:
+            raise PathNotFoundError(request.method)
+        return make_response(ConfigController.get_config(restaurant))
+
+    @staticmethod
+    def put(restaurant: str = None):
+        if restaurant:
+            raise PathNotFoundError(request.method)
+        data = get_data_from_request_or_raise_validation_error(CafeConfigSchema, request.json)
+        ConfigController.update_config(data)
+        return make_response(jsonify(status="ok"))
+
+    @staticmethod
+    def delete(restaurant: str = None):
+        if not restaurant:
+            raise PathNotFoundError(request.method)
+        ConfigController.delete_config(restaurant)
+        return make_response(jsonify(status="ok"))
+
+
 wow_namespace = Namespace("wow-api")
 wow_namespace.add_resource(Items, "/items")
 wow_namespace.add_resource(AddToCart, "/add-to-cart/<string:item_id>/<int:count>/<string:size>")
@@ -93,3 +131,4 @@ wow_namespace.add_resource(Cart, "/cart-data")
 wow_namespace.add_resource(Order, "/order")
 wow_namespace.add_resource(Orders, "/orders")
 wow_namespace.add_resource(OrderStatus, "/order-status/<string:order_id>/<string:status>")
+wow_namespace.add_resource(ConfigResource, "/config", "/config/<string:restaurant>")

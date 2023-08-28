@@ -1,4 +1,5 @@
-from marshmallow import Schema, fields, validate
+from bson import ObjectId
+from marshmallow import Schema, ValidationError, fields, validate, validates_schema
 from marshmallow.validate import OneOf
 
 
@@ -13,6 +14,11 @@ class AddItemsSchema(Schema):
     img_url = fields.Str(required=True)
     item_group = fields.Str(required=True)
     available_sizes = fields.List(fields.Nested(AvailableSizesSchema))  # noqa
+
+
+class CafeConfigSchema(Schema):
+    restaurant = fields.Str(required=True)
+    roles = fields.List(fields.Str, required=True)
 
 
 class PlaceOrderSchema(Schema):
@@ -35,3 +41,8 @@ class OrderSearchSchema(Schema):
     order_type = fields.Str(required=False, validate=OneOf(["Dine-in", "Delivery"]))  # noqa
     order_note = fields.Str(required=False, missing={})
     filters = fields.Dict(keys=fields.Str(), values=fields.Raw(), required=False, missing={})
+
+    @validates_schema
+    def validate_delivery_man_id(self, data, **kwargs):
+        if data.get("filters", {}).get("delivery_man_id") and not ObjectId.is_valid(data["filters"]["delivery_man_id"]):
+            raise ValidationError("Invalid delivery_man_id")

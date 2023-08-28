@@ -5,10 +5,10 @@ from bson.objectid import ObjectId
 from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 
-from main.exceptions import CustomValidationError, RecordNotFoundError
+from main.exceptions import CustomValidationError, DuplicateEntry, RecordNotFoundError
 from main.modules.auth.controller import AuthUserController
 from main.modules.auth.model import AuthUser, MobileAccounts
-from main.modules.wow.model import Cart, CartItem, Item, Order, OrderStatus
+from main.modules.wow.model import CafeConfig, Cart, CartItem, Item, Order, OrderStatus
 from main.msg_broker.RabbitMQ import PikaConnection, StompConnection
 
 
@@ -243,6 +243,9 @@ class OrderController:
                 "delivery_address": order.delivery_address,
                 "mobile_number": order.mobile_number,
                 "delivery_man": delivery_man.first_name + " " + delivery_man.last_name if delivery_man else None,
+                "delivery_man_mobile": delivery_man.phone if delivery_man else None,
+                "delivery_man_id": str(delivery_man.id) if delivery_man else None,
+                "total": order.total,
             }
             output.append(order_data)
         return output
@@ -270,3 +273,28 @@ class OrderController:
             order.save()
         except DoesNotExist:
             raise RecordNotFoundError("Invalid Order Id")
+
+
+class ConfigController:
+    @staticmethod
+    def add_config(config_data: dict):
+        if CafeConfig.get_objects_with_filter(restaurant=config_data["restaurant"]):
+            raise DuplicateEntry("Restaurant config already added")
+        CafeConfig.create(config_data)
+
+    @staticmethod
+    def get_config(restaurant: str) -> dict:
+        config = CafeConfig.get_objects_with_filter(restaurant=restaurant, to_json=True, only_first=True)
+        if not config:
+            raise RecordNotFoundError()
+        return config
+
+    @staticmethod
+    def update_config(updated_config_data: dict):
+        config = CafeConfig.get_objects_with_filter(restaurant=updated_config_data["restaurant"], only_first=True)
+        if config:
+            config.replace(updated_config_data)
+
+    @staticmethod
+    def delete_config(restaurant: str):
+        CafeConfig.delete(restaurant=restaurant)

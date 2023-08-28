@@ -1,9 +1,13 @@
 from main.exceptions.errors import (
     CustomValidationError,
+    DuplicateEntry,
+    PathNotFoundError,
     RecordNotFoundError,
     UnauthorizedUserError,
 )
 from main.exceptions.handlers import (
+    handle_duplicate_entry_error,
+    handle_path_not_found_error,
     handle_record_not_found_error,
     handle_unauthorized_user_error,
     handle_validation_error,
@@ -15,4 +19,6 @@ CUSTOM_EXCEPTIONS = [
     (CustomValidationError, handle_validation_error),
     (UnauthorizedUserError, handle_unauthorized_user_error),
     (RecordNotFoundError, handle_record_not_found_error),
+    (PathNotFoundError, handle_path_not_found_error),
+    (DuplicateEntry, handle_duplicate_entry_error),
 ]

@@ -18,6 +18,7 @@ class AuthUser(BaseModel):
     account_verified = BooleanField(required=True, default=False)
     current_login_time = DateTimeField()
     last_login_time = DateTimeField()
+    is_active = BooleanField(default=True)
 
     def is_Admin(self):
         return self.role == "admin"

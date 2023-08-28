@@ -82,8 +82,11 @@ class AuthUserController:
 
             if not auth_user.account_verified:
                 raise CustomValidationError(
-                    "Your Account is not verified yet, Login with Phone Number to verify " "your account."
+                    "Your Account is not verified yet, Login with Phone Number to verify your account."
                 )
+
+            if not auth_user.is_active:
+                raise RecordNotFoundError("Deactivated Account. Contact Owner!")
 
             if check_password_hash(auth_user.password, login_data["password"]):
                 cls.update_auth_user(auth_user)
@@ -145,18 +148,54 @@ class AuthUserController:
         auth_user.update({"otp": "111000"})
 
     @classmethod
-    def get_user_info(cls) -> dict:
+    def get_user(cls, user_email: str = None) -> dict:
         """
         To get user info
+        :param user_email:
         :return:
         :rtype:
         """
-        auth_user = cls.get_current_auth_user().to_json()
+        if user_email:
+            auth_user = cls.get_user_by_email(user_email, to_json=True)
+            if not auth_user:
+                return {}
+        else:
+            auth_user = cls.get_current_auth_user().to_json()
         del auth_user["password"]
         del auth_user["otp"]
-        del auth_user["account_verified"]
         return auth_user
+
+    @classmethod
+    def update_user(cls, data: dict, email: str = None):
+        """
+        To get user info
+        :param email:
+        :type email:
+        :param data:
+        :type data:
+        :return:
+        :rtype:
+        """
+        if email:
+            auth_user = cls.get_user_by_email(email)
+            if not auth_user:
+                raise RecordNotFoundError(f"User not found with email: '{email}'")
+        else:
+            auth_user = cls.get_current_auth_user()
+        auth_user.update(data)
+
+    @classmethod
+    def get_user_by_email(cls, email, to_json=False):
+        return AuthUser.get_objects_with_filter(email=email, only_first=True, to_json=to_json)
 
     @classmethod
     def get_user_by_id(cls, user_id):
         return AuthUser.objects.get(_id=user_id)
+
+    @classmethod
+    def get_users(cls, to_json=False, **filters):
+        users = AuthUser.get_objects_with_filter(**filters, to_json=to_json)
+        for user in users:
+            del user["password"]
+            del user["otp"]
+        return users

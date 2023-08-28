@@ -14,6 +14,15 @@ from mongoengine import (
 from main.db import BaseModel
 
 
+class CafeConfig(BaseModel):
+    """
+    Model for Cafe Config
+    """
+
+    restaurant = StringField(required=True, unique=True)
+    roles = ListField(StringField())
+
+
 class ItemAvailableSizes(EmbeddedDocument):
     """
     Embedded document for order status

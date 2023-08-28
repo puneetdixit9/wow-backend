@@ -68,6 +68,20 @@ class BaseModel(DynamicDocument):
             setattr(self, k, v)
         self.save()
 
+    def replace(self, data: dict):
+        """
+        To replace the record.
+        :param data:
+        """
+        for field_name in self._fields_ordered:
+            if field_name != "id" and field_name not in data:
+                delattr(self, field_name)
+
+        for k, v in data.items():
+            setattr(self, k, v)
+
+        self.save()
+
     @classmethod
     def delete(cls, **filters):
         """
@@ -87,7 +101,7 @@ class BaseModel(DynamicDocument):
         return [(record.to_json() if to_json else record) for record in cls.objects()]
 
     @classmethod
-    def get_objects_with_filter(cls, only_first=None, to_json=False, **filters) -> list or "BaseModel":
+    def get_objects_with_filter(cls, only_first=False, to_json=False, **filters) -> list or dict or "BaseModel":
         """
         To get objects with filter
         :param only_first:
@@ -98,7 +112,10 @@ class BaseModel(DynamicDocument):
         filtered_records = cls.objects(**filters)
         if only_first:
             record = filtered_records.first()
-            return record.to_json() if to_json else record if record else None
+            if record:
+                return record.to_json() if to_json else record
+            return None
+
         return [(record.to_json() if to_json else record) for record in filtered_records]
 
     @classmethod

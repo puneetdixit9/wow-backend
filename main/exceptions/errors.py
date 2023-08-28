@@ -27,3 +27,26 @@ class RecordNotFoundError(Exception):
     def __init__(self, error_msg=None):
         super().__init__(error_msg or "Record not found!!!")
         self.status_code = 404
+
+
+class PathNotFoundError(Exception):
+    """
+    This is the custom exception class to raise an error is record not found.
+    """
+
+    def __init__(self, method: str):
+        super().__init__(
+            f"The requested URL with method type '{method}' was not found on the server. If you entered "
+            f"the URL manually please check your spelling and method and try again."
+        )
+        self.status_code = 404
+
+
+class DuplicateEntry(Exception):
+    """
+    This is the custom exception class to raise an error for conflict
+    """
+
+    def __init__(self, error_msg=None):
+        super().__init__(error_msg or "Duplicate Entry !!!")
+        self.status_code = 409
