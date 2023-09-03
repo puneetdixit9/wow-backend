@@ -12,9 +12,12 @@ class StompConnection:
         self.connect()
 
     def connect(self):
-        self.conn = stomp.Connection(host_and_ports=[(self.host, self.port)])
-        self.conn.connect(self.username, self.password, wait=True)
-        print("Stomp connection established")
+        try:
+            self.conn = stomp.Connection(host_and_ports=[(self.host, self.port)])
+            self.conn.connect(self.username, self.password, wait=True)
+            print("Stomp connection established")
+        except:
+            pass
 
     def broadcast_to_exchange(self, exchange_name: str, body: str):
         """
