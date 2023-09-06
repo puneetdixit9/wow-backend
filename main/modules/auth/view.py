@@ -18,8 +18,8 @@ class SignUp(Resource):
     def post():
         data = get_data_from_request_or_raise_validation_error(SignUpSchema, request.json)
         user, error_data = AuthUserController.create_new_user(data)
-        if not user:
-            return make_response(jsonify(error_data), 409)
+        if error_data:
+            return make_response(jsonify(error_data), 411 if "invalid_phone" in error_data else 409)
         return make_response(jsonify(status="ok"), 201)
 
 
@@ -62,8 +62,7 @@ class OTP(Resource):
     @staticmethod
     def post():
         data = get_data_from_request_or_raise_validation_error(SendOTP, request.json)
-        AuthUserController.send_otp(data)
-        return make_response(jsonify(status="ok"))
+        return make_response(AuthUserController.send_otp(data))
 
 
 class User(Resource):

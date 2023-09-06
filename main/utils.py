@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 
 from bson.objectid import ObjectId
@@ -107,3 +108,10 @@ def log_user_access(response):
         f"Status code: {response.status_code}"
     )
     return response
+
+
+def generate_otp():
+    """
+    To generate a random OTP.
+    """
+    return "".join(random.choice("0123456789") for i in range(6))

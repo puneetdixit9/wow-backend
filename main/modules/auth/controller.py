@@ -6,6 +6,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from main.exceptions import CustomValidationError, RecordNotFoundError
 from main.modules.auth.model import AuthUser
 from main.modules.jwt.controller import JWTController
+from main.sms_sender import send_otp_sms_to_number
+from main.utils import generate_otp
 
 
 class AuthUserController:
@@ -36,6 +38,7 @@ class AuthUserController:
         :return (AuthUser, error_data):
         """
         error_data = {}
+        auth_user = None
         user_by_email = AuthUser.objects(email=user_data["email"]).first()
         user_by_phone = AuthUser.objects(phone=user_data["phone"]).first()
         if user_by_email or user_by_phone:
@@ -45,11 +48,16 @@ class AuthUserController:
             if user_by_email:
                 error_data["duplicate_entry"].append("email")
         else:
-            user_data["password"] = generate_password_hash(user_data["password"])
-            auth_user = AuthUser.create(user_data)
-            cls.send_otp({"phone": user_data["phone"]})
+            otp = generate_otp()
+            response = send_otp_sms_to_number(otp, user_data["phone"])
+            if "status_code" in response and response["status_code"] == 411:
+                error_data["invalid_phone"] = "Phone Number is Invalid"
+            else:
+                user_data["password"] = generate_password_hash(user_data["password"])
+                user_data["otp"] = otp
+                auth_user = AuthUser.create(user_data)
             return auth_user, error_data
-        return None, error_data
+        return auth_user, error_data
 
     @classmethod
     def update_user_password(cls, update_password_data: dict) -> (dict, str):
@@ -145,7 +153,12 @@ class AuthUserController:
         auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True)
         if not auth_user:
             raise RecordNotFoundError("Phone number not found")
-        auth_user.update({"otp": "111000"})
+        otp = generate_otp()
+        response = send_otp_sms_to_number(otp, phone)
+        if "status_code" in response and response["status_code"] == 411:
+            return {"error": "Invalid Phone Number"}, 411
+        auth_user.update({"otp": otp})
+        return {"status": "ok"}, 200
 
     @classmethod
     def get_user(cls, user_email: str = None) -> dict:
