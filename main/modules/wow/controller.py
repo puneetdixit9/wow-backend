@@ -128,8 +128,8 @@ class OrderController:
         "cancelByStore",
     ]
 
-    # pika_conn = PikaConnection()
-    # stomp_conn = StompConnection()
+    pika_conn = PikaConnection()
+    stomp_conn = StompConnection()
 
     @classmethod
     def place_order(cls, data: dict):
@@ -162,7 +162,7 @@ class OrderController:
             },
         ).id
         # cls.stomp_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
-        # cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
+        cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
         CartController.discard_cart_items()
         return {"status": "ok", "order_no": order_count + 1}
 

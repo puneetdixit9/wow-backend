@@ -4,7 +4,7 @@ import stomp
 
 class StompConnection:
     def __init__(self):
-        self.host = "52.54.183.1"
+        self.host = "54.80.184.171"
         self.port = 61613
         self.username = "admin"
         self.password = "1m2p3k4n"
@@ -16,7 +16,7 @@ class StompConnection:
             self.conn = stomp.Connection(host_and_ports=[(self.host, self.port)])
             self.conn.connect(self.username, self.password, wait=True)
             print("Stomp connection established")
-        except:
+        except:  # noqa
             pass
 
     def broadcast_to_exchange(self, exchange_name: str, body: str):
@@ -58,7 +58,7 @@ class StompConnection:
 
 class PikaConnection:
     def __init__(self):
-        self.host = "52.54.183.1"
+        self.host = "54.80.184.171"
         self.port = 5672
         self.username = "admin"
         self.password = "1m2p3k4n"
