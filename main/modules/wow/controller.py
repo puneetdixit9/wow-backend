@@ -6,10 +6,12 @@ from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 
 from main.exceptions import CustomValidationError, DuplicateEntry, RecordNotFoundError
+from main.firebase import new_order_placed_notification, send_push_notification
 from main.modules.auth.controller import AuthUserController
-from main.modules.auth.model import AuthUser, MobileAccounts
+from main.modules.auth.model import MobileAccounts
 from main.modules.wow.model import CafeConfig, Cart, CartItem, Item, Order, OrderStatus
-from main.msg_broker.RabbitMQ import PikaConnection, StompConnection
+
+# from main.msg_broker.RabbitMQ import PikaConnection, StompConnection
 
 
 class ItemController:
@@ -118,18 +120,18 @@ class CartController:
 
 
 class OrderController:
-    VALID_ORDER_STATUS = [
-        "placed",
-        "cancelByCustomer",
-        "inKitchen",
-        "prepared",
-        "inDelivery",
-        "allDone",
-        "cancelByStore",
-    ]
+    PLACED = "placed"
+    CANCEL_BY_CUSTOMER = "cancelByCustomer"
+    IN_KITCHEN = "inKitchen"
+    PREPARED = "prepared"
+    IN_DELIVERY = "inDelivery"
+    ALL_DONE = "allDone"
+    CANCEL_BY_STORE = "cancelByStore"
 
-    pika_conn = PikaConnection()
-    stomp_conn = StompConnection()
+    VALID_ORDER_STATUS = [PLACED, CANCEL_BY_CUSTOMER, IN_KITCHEN, PREPARED, IN_DELIVERY, ALL_DONE, CANCEL_BY_STORE]
+
+    # pika_conn = PikaConnection()
+    # stomp_conn = StompConnection()
 
     @classmethod
     def place_order(cls, data: dict):
@@ -152,7 +154,7 @@ class OrderController:
                 "user_id": user_id,
                 "items": cart_data.items,
                 "status_history": [OrderStatus(status="placed")],
-                "status": "placed",
+                "status": cls.PLACED,
                 "order_no": order_count + 1,
                 "order_note": data["order_note"],
                 "order_type": data["order_type"],
@@ -161,10 +163,18 @@ class OrderController:
                 "total": data["total"],
             },
         ).id
+
+        items = []
+        for item in cart_data.items:
+            item_name = Item.objects.get(_id=item.item_id).item_name
+            items.append(f"{item.count}x {item.size if item.size else ''} {item_name}")
+        new_order_placed_notification("Orders", ", ".join(items))
+        cls.send_push_notification_to_user(user_id, order_count + 1, cls.PLACED, data["order_type"])
+
         # cls.stomp_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
-        cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
+        # cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
         CartController.discard_cart_items()
-        return {"status": "ok", "order_no": order_count + 1}
+        return {"status": "ok", "order_no": order_count + 1, "order_id": order_id}
 
     @staticmethod
     def get_order_user_id(data):
@@ -180,7 +190,7 @@ class OrderController:
             user_id = user.id
         else:
             phone = data["mobile_number"]
-            auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True)
+            auth_user = AuthUserController.get_user_with_filter(phone=phone)
             if auth_user:
                 user_id = auth_user.id
             else:
@@ -271,8 +281,53 @@ class OrderController:
             order.status = status
             order.status_history.append(OrderStatus(status=status))
             order.save()
+            cls.send_push_notification_to_user(order.user_id, order.order_no, status, order.order_type)
         except DoesNotExist:
             raise RecordNotFoundError("Invalid Order Id")
+
+    @classmethod
+    def send_push_notification_to_user(cls, user_id: ObjectId, order_number: str, status: str, order_type: str):
+        """
+        This function is used to send the push notification to the user for order status.
+        :param order_type:
+        :type order_type:
+        :param user_id:
+        :type user_id:
+        :param order_number:
+        :type order_number:
+        :param status:
+        :type status:
+        :return:
+        :rtype:
+        """
+        user = AuthUserController.get_user_with_filter(id=user_id)
+        if user and user.device_tokens:
+            data = {"title": "", "body": ""}
+            if status == cls.PLACED:
+                data["title"] = "Order Placed"
+                data["body"] = f"You order is placed, Order no {order_number}"
+            elif status == cls.CANCEL_BY_CUSTOMER:
+                data["title"] = "Order Cancelled by Customer"
+                data["body"] = f"Your Order no {order_number} is cancelled by you."
+            elif status == cls.IN_KITCHEN:
+                data["title"] = "Preparing"
+                data["body"] = f"Your order is in the Kitchen, Order no {order_number}"
+            elif status == cls.PREPARED:
+                data["title"] = "Order Prepared"
+                data[
+                    "body"
+                ] = f"You order no {order_number} is prepared, {'Waiting for delivery man.' if order_type == 'Delivery' else 'Please collect your order from shop.'}"
+            elif status == cls.IN_DELIVERY:
+                data["title"] = "Order Picked-up"
+                data["body"] = f"You order no {order_number} is picked-up by delivery man, It will deliver soon"
+            elif status == cls.ALL_DONE:
+                data["title"] = "Order Delivered"
+                data["body"] = f"You order no {order_number} is delivered, Enjoy your Food!"
+            else:
+                data["title"] = "Order Cancelled"
+                data["body"] = f"You order no {order_number} is cancelled by store, Your money will return in 24 hrs."
+
+            send_push_notification(user.device_tokens, data)
 
 
 class ConfigController:

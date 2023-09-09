@@ -127,6 +127,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+prod.env
+firebase_credentials.json
 
 # Spyder project settings
 .spyderproject

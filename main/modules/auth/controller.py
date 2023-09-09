@@ -214,3 +214,7 @@ class AuthUserController:
             del user["password"]
             del user["otp"]
         return users
+
+    @classmethod
+    def get_user_with_filter(cls, to_json=False, **filters):
+        return AuthUser.get_objects_with_filter(**filters, to_json=to_json, only_first=True)
