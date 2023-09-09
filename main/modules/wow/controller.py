@@ -174,7 +174,7 @@ class OrderController:
         # cls.stomp_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
         # cls.pika_conn.broadcast_to_exchange(exchange_name="orders", body=f"order placed : {order_id}")
         CartController.discard_cart_items()
-        return {"status": "ok", "order_no": order_count + 1, "order_id": order_id}
+        return {"status": "ok", "order_no": order_count + 1, "order_id": str(order_id)}
 
     @staticmethod
     def get_order_user_id(data):
