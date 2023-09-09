@@ -97,7 +97,7 @@ class AuthUserController:
                 raise RecordNotFoundError("Deactivated Account. Contact Owner!")
 
             if check_password_hash(auth_user.password, login_data["password"]):
-                cls.update_auth_user(auth_user)
+                cls.update_auth_user(auth_user, login_data.get("device_token"))
                 return JWTController.get_access_and_refresh_token(auth_user.to_json())
             raise RecordNotFoundError("Wrong password !")
 
@@ -108,12 +108,14 @@ class AuthUserController:
         if not otp:
             raise CustomValidationError("OTP expired, Please resend OTP")
         if str(otp) == str(login_data["otp"]):
-            cls.update_auth_user(auth_user)
+            cls.update_auth_user(auth_user, login_data.get("device_token"))
             return JWTController.get_access_and_refresh_token(auth_user.to_json())
         raise CustomValidationError("Invalid OTP !")
 
     @staticmethod
-    def update_auth_user(auth_user: AuthUser):
+    def update_auth_user(auth_user: AuthUser, device_token: str):
+        if device_token and device_token not in auth_user.device_tokens:
+            auth_user.device_tokens.append(device_token)
         auth_user.update(
             {
                 "account_verified": True,

@@ -23,6 +23,7 @@ class LogInSchema(Schema):
     password = fields.String()
     phone = fields.String()
     otp = fields.String(validate=Length(min=6))  # noqa
+    device_token = fields.String()
 
     @validates_schema
     def validate_at_least_one_email_and_username(self, data, **kwargs):
