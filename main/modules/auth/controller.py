@@ -86,7 +86,7 @@ class AuthUserController:
         if email:
             auth_user = AuthUser.objects(email=email).first()
             if not auth_user:
-                raise RecordNotFoundError(f"User not found with email: '{email}'")
+                raise RecordNotFoundError(f"Email '{email}' is not registered")
 
             if not auth_user.account_verified:
                 raise CustomValidationError(
@@ -103,7 +103,7 @@ class AuthUserController:
 
         auth_user = AuthUser.get_objects_with_filter(phone=phone, only_first=True)
         if not auth_user:
-            raise RecordNotFoundError(f"User not found with phone: '{phone}'")
+            raise RecordNotFoundError(f"Phone number '{phone}' is not registered")
         otp = auth_user.otp
         if not otp:
             raise CustomValidationError("OTP expired, Please resend OTP")
